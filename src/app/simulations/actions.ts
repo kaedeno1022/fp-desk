@@ -50,6 +50,20 @@ export async function saveSimulationAction(
   return { message: "保存した", error: null };
 }
 
+/** ヒアリングウィザードの完了時: 回答から組み立てた入力でシミュレーションを作成する */
+export async function createFromInterviewAction(formData: FormData): Promise<void> {
+  const userId = await requireUserId();
+  const name = String(formData.get("name") ?? "").trim() || "ヒアリング結果";
+  let input: SimulationInput;
+  try {
+    input = JSON.parse(String(formData.get("inputJson") ?? "")) as SimulationInput;
+  } catch {
+    redirect("/interview");
+  }
+  const id = createSimulation(userId, name, input);
+  redirect(`/simulations/${id}`);
+}
+
 export async function deleteSimulationAction(formData: FormData): Promise<void> {
   const userId = await requireUserId();
   const id = String(formData.get("id") ?? "");

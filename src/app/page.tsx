@@ -30,14 +30,22 @@ export default async function Home() {
           <h2 className="border-l-[3px] border-accent pl-3 text-base font-bold text-ink">
             シミュレーション
           </h2>
-          <form action={createSimulationAction}>
-            <button
-              type="submit"
-              className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
+          <div className="flex items-center gap-3">
+            <Link
+              href="/interview"
+              className="rounded-md border border-accent px-5 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:text-accent-ink"
             >
-              新規作成
-            </button>
-          </form>
+              ヒアリングから作成
+            </Link>
+            <form action={createSimulationAction}>
+              <button
+                type="submit"
+                className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
+              >
+                新規作成
+              </button>
+            </form>
+          </div>
         </div>
 
         {simulations.length === 0 ? (
