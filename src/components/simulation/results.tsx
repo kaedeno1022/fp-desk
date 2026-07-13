@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { SimulationResult, YearResult } from "@/lib/engine/simulate";
+import { loadTaxTables } from "@/lib/engine/tables";
 
 // dataviz 検証済み参照パレット（カテゴリカル slot 1〜4 を固定順で使用）。
 // チャート面はアプリのカード色に合わせる
@@ -500,12 +501,15 @@ export function SimulationResults({
   name,
   result,
   compare,
+  municipalityName,
 }: {
   name: string;
   result: SimulationResult;
   compare: { name: string; result: SimulationResult } | null;
+  municipalityName?: string;
 }) {
   const years = result.years;
+  const tablesMeta = loadTaxTables().meta;
   if (years.length === 0) return null;
 
   const final = years[years.length - 1];
@@ -598,6 +602,16 @@ export function SimulationResults({
           </table>
         </div>
       </ResultSection>
+
+      {/* データ基準時点の明示: 提案時に「いつ時点の制度で試算したか」を示す */}
+      <p className="px-1 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+        本試算は {tablesMeta.fiscalLabel} の税制・料率テーブル（主要項目は{" "}
+        {tablesMeta.lastVerified} に公的機関の公表値と照合）をシミュレーション全期間に固定適用したもの。
+        将来の税制改正・物価・運用成績は反映していないため、実際の結果とは異なる。
+        {municipalityName
+          ? `国保・介護・後期高齢者の料率は「${municipalityName}」の入力値を使用。`
+          : "国保・介護・後期高齢者の料率は概算の既定値のまま（自治体料率セクションで居住自治体の公表値に上書きすること）。"}
+      </p>
     </div>
   );
 }

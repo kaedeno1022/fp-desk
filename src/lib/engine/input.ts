@@ -101,6 +101,10 @@ export type AccountsInput = {
 };
 
 export type MunicipalRates = {
+  /** 自治体名（メモ。計算には使わない） */
+  name: string;
+  /** 料率の出典ページURL（自治体の公表ページを貼る） */
+  referenceUrl: string;
   nhi: NhiRates;
   latterElderly: LatterElderlyRates;
   care1: CareInsurance1Rates;
@@ -145,7 +149,13 @@ export function normalizeInput(raw: SimulationInput): SimulationInput {
     debts: raw.debts ?? [],
     events: raw.events ?? [],
     accounts: { ...d.accounts, ...raw.accounts },
-    municipal: raw.municipal ?? d.municipal,
+    municipal: {
+      ...d.municipal,
+      ...raw.municipal,
+      nhi: { ...d.municipal.nhi, ...raw.municipal?.nhi },
+      latterElderly: { ...d.municipal.latterElderly, ...raw.municipal?.latterElderly },
+      care1: { ...d.municipal.care1, ...raw.municipal?.care1 },
+    },
   };
 }
 
@@ -200,6 +210,8 @@ export function createDefaultInput(): SimulationInput {
       drawdownStartYear: null,
     },
     municipal: {
+      name: "",
+      referenceUrl: "",
       nhi: t.nhiDefaults,
       latterElderly: t.latterElderlyDefaults,
       care1: t.careInsurance1Defaults,

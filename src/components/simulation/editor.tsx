@@ -2,7 +2,8 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { saveSimulationAction, type SaveState } from "@/app/simulations/actions";
-import type { ChildInput, PersonInput, SimulationInput } from "@/lib/engine/input";
+import type { ChildInput, MunicipalRates, PersonInput, SimulationInput } from "@/lib/engine/input";
+import type { NhiCategory } from "@/lib/engine/tables";
 import { createDefaultPerson } from "@/lib/engine/input";
 import { simulate } from "@/lib/engine/simulate";
 import { loadTaxTables } from "@/lib/engine/tables";
@@ -121,6 +122,23 @@ function Num({
   );
 }
 
+/** 円単位の金額フィールド（均等割など万円だと桁が細かすぎるもの用） */
+function Yen({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <Field label={`${label}（円）`}>
+      <NumberInput value={value} onChange={onChange} />
+    </Field>
+  );
+}
+
 function Section({
   title,
   description,
@@ -180,6 +198,16 @@ export function SimulationEditor({
     }));
   const patchAccounts = (p: Partial<SimulationInput["accounts"]>) =>
     setInput((prev) => ({ ...prev, accounts: { ...prev.accounts, ...p } }));
+  const patchMunicipal = (p: Partial<MunicipalRates>) =>
+    setInput((prev) => ({ ...prev, municipal: { ...prev.municipal, ...p } }));
+  const patchNhi = (cat: "medical" | "support" | "care", p: Partial<NhiCategory>) =>
+    setInput((prev) => ({
+      ...prev,
+      municipal: {
+        ...prev.municipal,
+        nhi: { ...prev.municipal.nhi, [cat]: { ...prev.municipal.nhi[cat], ...p } },
+      },
+    }));
 
   const final = result.years[result.years.length - 1];
   const minCash = result.years.reduce(
@@ -1047,8 +1075,126 @@ export function SimulationEditor({
         </div>
       </Section>
 
+      <Section
+        title="自治体料率（国保・介護1号・後期高齢者）"
+        description="退職後の保険料計算に使う。既定値は概算プレースホルダなので、実務利用前に必ず居住自治体の公表値で上書きする"
+      >
+        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[14rem_1fr_auto]">
+          <Field label="自治体名（メモ）">
+            <input
+              type="text"
+              className={inputCls}
+              placeholder="例: 東京都新宿区"
+              value={input.municipal.name}
+              onChange={(e) => patchMunicipal({ name: e.target.value })}
+            />
+          </Field>
+          <Field label="料率の出典ページURL">
+            <input
+              type="url"
+              className={inputCls}
+              placeholder="自治体の国保・介護保険料ページのURLを貼る"
+              value={input.municipal.referenceUrl}
+              onChange={(e) => patchMunicipal({ referenceUrl: e.target.value })}
+            />
+          </Field>
+          {input.municipal.referenceUrl && (
+            <a
+              href={input.municipal.referenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="self-end pb-1.5 text-sm text-accent hover:underline"
+            >
+              開く ↗
+            </a>
+          )}
+        </div>
+        <p className="mb-4 text-xs text-ink2">
+          「（自治体名） 国民健康保険料 料率」「（自治体名） 介護保険料 基準額」で検索すると公表ページが見つかる。
+        </p>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          {(
+            [
+              { cat: "medical", label: "国保・医療分" },
+              { cat: "support", label: "国保・後期支援分" },
+              { cat: "care", label: "国保・介護分（40〜64歳）" },
+            ] as const
+          ).map(({ cat, label }) => (
+            <div key={cat} className="flex flex-col gap-3">
+              <div className="text-xs font-bold text-ink">{label}</div>
+              <Pct
+                label="所得割"
+                value={input.municipal.nhi[cat].incomeRate}
+                onChange={(v) => patchNhi(cat, { incomeRate: v })}
+              />
+              <Yen
+                label="均等割/人"
+                value={input.municipal.nhi[cat].perCapita}
+                onChange={(v) => patchNhi(cat, { perCapita: v })}
+              />
+              <Yen
+                label="平等割/世帯"
+                value={input.municipal.nhi[cat].perHousehold}
+                onChange={(v) => patchNhi(cat, { perHousehold: v })}
+              />
+              <Money
+                label="賦課限度額"
+                value={input.municipal.nhi[cat].cap}
+                onChange={(v) => patchNhi(cat, { cap: v })}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4 lg:grid-cols-4">
+          <Yen
+            label="介護1号 基準額/年（65歳〜）"
+            value={input.municipal.care1.baseAnnual}
+            onChange={(v) =>
+              patchMunicipal({ care1: { ...input.municipal.care1, baseAnnual: v } })
+            }
+          />
+          <Yen
+            label="後期高齢者 均等割/年（75歳〜）"
+            value={input.municipal.latterElderly.perCapita}
+            onChange={(v) =>
+              patchMunicipal({
+                latterElderly: { ...input.municipal.latterElderly, perCapita: v },
+              })
+            }
+          />
+          <Pct
+            label="後期高齢者 所得割"
+            value={input.municipal.latterElderly.incomeRate}
+            onChange={(v) =>
+              patchMunicipal({
+                latterElderly: { ...input.municipal.latterElderly, incomeRate: v },
+              })
+            }
+          />
+          <Money
+            label="後期高齢者 賦課限度額"
+            value={input.municipal.latterElderly.cap}
+            onChange={(v) =>
+              patchMunicipal({
+                latterElderly: { ...input.municipal.latterElderly, cap: v },
+              })
+            }
+          />
+        </div>
+        <p className="mt-2 text-xs text-ink2">
+          介護1号の所得段階別乗率・後期高齢者の均等割軽減の判定基準は既定値のまま使う（自治体差の主因である基準額・料率のみ上書きする簡易方式）。
+        </p>
+      </Section>
+
       {/* 結果 */}
-      <SimulationResults name={name} result={result} compare={compare} />
+      <SimulationResults
+        name={name}
+        result={result}
+        compare={compare}
+        municipalityName={input.municipal.name}
+      />
     </div>
   );
 }

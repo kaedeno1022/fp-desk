@@ -10,7 +10,13 @@ export type FormulaBracket = {
 export type TaxBracket = { upTo: number | null; rate: number; deduction: number };
 
 export type TaxTables = {
-  meta: { fiscalYear: number; description: string; note?: string };
+  meta: {
+    fiscalYear: number;
+    fiscalLabel: string;
+    lastVerified: string;
+    description: string;
+    note?: string;
+  };
   incomeTax: {
     brackets: TaxBracket[];
     reconstructionSurtaxRate: number;

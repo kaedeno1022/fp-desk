@@ -1,6 +1,8 @@
 {
   "meta": {
     "fiscalYear": 2025,
+    "fiscalLabel": "令和7年分所得税・令和8年度住民税・令和7年度社会保険料",
+    "lastVerified": "2026-07-13",
     "description": "令和7年分所得税・令和8年度住民税・令和7年度社会保険料ベースの料率テーブル。verified=false の値は公表値との突合が未実施。確認後に verified を true にして sourceUrl と verifiedDate を記録する",
     "note": "基礎控除の88/68/63万円の上乗せは令和7・8年分限りの特例だが、『現在の税制を固定』方針によりこのテーブルを全期間に適用する"
   },

@@ -18,6 +18,19 @@ describe("normalizeInput", () => {
     expect(normalized.accounts.drawdownRate).toBe(0.04);
   });
 
+  it("自治体情報のないデータには空の自治体名・URLを補完し、料率は保持する", () => {
+    const old = createDefaultInput();
+    old.municipal.nhi.medical.incomeRate = 0.081;
+    const raw = JSON.parse(JSON.stringify(old)) as Record<string, unknown>;
+    delete (raw.municipal as Record<string, unknown>).name;
+    delete (raw.municipal as Record<string, unknown>).referenceUrl;
+
+    const normalized = normalizeInput(raw as unknown as SimulationInput);
+    expect(normalized.municipal.name).toBe("");
+    expect(normalized.municipal.referenceUrl).toBe("");
+    expect(normalized.municipal.nhi.medical.incomeRate).toBe(0.081);
+  });
+
   it("保存済みの値は上書きしない", () => {
     const input = createDefaultInput();
     input.livingExpenseAnnual = 9_999_999;
