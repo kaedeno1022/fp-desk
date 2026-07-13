@@ -87,8 +87,10 @@
     ],
     "meta": {
       "source": "国税庁 No.1191・No.1195（令和7年改正後）",
-      "verified": false,
-      "note": "配偶者特別控除は納税者所得900万円以下の列のみ実装。900万円超は配偶者控除と同様の逓減があるが簡略化（該当時は要注意）"
+      "sourceUrl": "https://www.nta.go.jp/users/gensen/2025kiso/index.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "配偶者控除38万円・所得要件58万円・配偶者特別控除の上限133万円を確認。特別控除は納税者所得900万円以下の列のみ実装、900万円超は按分簡略化（該当時は要注意）"
     }
   },
   "dependentDeduction": {
@@ -98,9 +100,11 @@
     "generalAdult": { "incomeTax": 380000, "residentTax": 330000, "ageFrom": 23, "ageTo": 69 },
     "elderly": { "incomeTax": 480000, "residentTax": 380000, "ageFrom": 70, "ageTo": null },
     "meta": {
-      "source": "国税庁 No.1180",
-      "verified": false,
-      "note": "同居老親等の加算・特定親族特別控除（19-22歳所得58万超）は対象外（子の所得は入力しない前提）"
+      "source": "国税庁 No.1180（令和7年改正後）",
+      "sourceUrl": "https://www.nta.go.jp/users/gensen/2025kiso/index.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "所得要件58万円への改正・特定扶養63万円を確認。同居老親等の加算・特定親族特別控除（19-22歳所得58万超）は対象外（子の所得は入力しない前提）"
     }
   },
   "insuranceDeduction": {
@@ -129,7 +133,13 @@
       "residentTaxRate": 0.5,
       "residentTaxCap": 25000
     },
-    "meta": { "source": "国税庁 No.1140・No.1145（新制度）", "verified": false, "note": "生保は新制度の区分別枠（一般・介護医療・年金）。旧制度契約は対象外" }
+    "meta": {
+      "source": "国税庁 No.1140・No.1145（新制度）",
+      "sourceUrl": "https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1140.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "所得税の合計上限12万円を確認。生保は新制度の区分別枠（一般・介護医療・年金）。旧制度契約（平成23年以前）は対象外"
+    }
   },
   "residentTax": {
     "incomeRate": 0.1,
@@ -154,8 +164,10 @@
     },
     "meta": {
       "source": "総務省・東京都主税局（1級地基準）",
-      "verified": false,
-      "note": "均等割5,000円は森林環境税1,000円込み。非課税限度額は1級地の基準"
+      "sourceUrl": "https://www.soumu.go.jp/main_sosiki/jichi_zeisei/czaisei/czaisei_seido/150790_06.html",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "均等割5,000円（市3,000+県1,000+森林環境税1,000）と非課税限度額の式（35万×n+10万+加算）を確認。非課税限度額は級地区分で異なる（本テーブルは1級地）"
     }
   },
   "socialInsurance": {
@@ -176,7 +188,7 @@
       "sourceUrl": "https://www.kyoukaikenpo.or.jp/about/business/insurance_rate/rate_prefectures/r07/",
       "verified": true,
       "verifiedDate": "2026-07-13",
-      "note": "確認済み: 東京9.91%・介護2号1.59%・厚生年金18.3%・雇用保険(一般)労働者0.55%・国民年金月17,510円（いずれも令和7年度）。大阪・愛知の率は未確認なので使用時は要突合。賞与は考慮せず年収/12を報酬月額として等級判定する簡易方式。等級境界は隣接等級の中間値で算出"
+      "note": "確認済み: 東京9.91%・大阪10.24%・愛知10.03%・介護2号1.59%・厚生年金18.3%・雇用保険(一般)労働者0.55%・国民年金月17,510円（いずれも令和7年度）。賞与は考慮せず年収/12を報酬月額として等級判定する簡易方式。等級境界は隣接等級の中間値で算出"
     }
   },
   "pensionIncomeDeduction": {
@@ -194,19 +206,36 @@
       { "pensionUpTo": 10000000, "formula": { "rate": 0.05, "add": 1455000 } },
       { "pensionUpTo": null, "formula": { "rate": 0, "add": 1955000 } }
     ],
-    "meta": { "source": "国税庁 No.1600（年金以外の合計所得1,000万円以下の列）", "verified": false }
+    "meta": {
+      "source": "国税庁・日本年金機構（年金以外の合計所得1,000万円以下の列）",
+      "sourceUrl": "https://www.nenkin.go.jp/oshirase/topics/2019/fuyoushinkoku.files/07.pdf",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "65歳以上330万円以下110万円と区分表を年金機構資料で確認"
+    }
   },
   "retirementDeduction": {
     "perYearUpTo20": 400000,
     "perYearOver20": 700000,
     "minimum": 800000,
-    "meta": { "source": "国税庁 No.1420", "verified": false }
+    "meta": {
+      "source": "国税庁 No.1420",
+      "sourceUrl": "https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/1420.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "40万円×年（最低80万円）・20年超は800万円+70万円×超過年を公式例で確認"
+    }
   },
   "capitalGainsTaxRate": 0.20315,
   "nisa": {
     "annualLimit": 3600000,
     "lifetimeLimit": 18000000,
-    "meta": { "source": "金融庁 新NISA", "verified": false, "note": "つみたて/成長枠の区別はせず合算で管理する簡易方式" }
+    "meta": {
+      "source": "金融庁 新NISA（つみたて120万+成長240万/年、生涯1,800万）",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "つみたて/成長枠の区別はせず合算で管理する簡易方式。成長枠内1,200万の制約と売却による枠復活は未モデル化"
+    }
   },
   "housingLoanCredit": {
     "creditRate": 0.007,
@@ -220,9 +249,11 @@
     "residentTaxTransferRateOfTaxableIncome": 0.05,
     "residentTaxTransferCap": 97500,
     "meta": {
-      "source": "国税庁 No.1211（令和6・7年入居）",
-      "verified": false,
-      "note": "子育て世帯等の限度額上乗せは未対応。入居年により限度額が変わるため入居年変更時は要確認"
+      "source": "財務省 令和7年度改正資料・国土交通省 住宅ローン減税（令和6・7年入居）",
+      "sourceUrl": "https://www.mof.go.jp/tax_policy/summary/income/r7kaisei.pdf",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "控除率0.7%・認定4,500万・ZEH3,500万・省エネ3,000万・中古その他2,000万(10年)を確認。子育て世帯等の上乗せ（認定5,000万等）は未対応。入居年により限度額が変わるため入居年変更時は要確認"
     }
   },
   "childAllowance": {
@@ -266,7 +297,8 @@
     "meta": {
       "source": "文部科学省 子供の学習費調査（令和3年度）・私立大学等の学生納付金調査",
       "verified": false,
-      "note": "学校教育費+給食費+校外活動費込みの年額概算。高校の就学支援金は highSchoolSupport で費用から控除する"
+      "note": "学校教育費+給食費+校外活動費込みの年額概算。文科省の調査自体は実在確認済みだが報告書の詳細表との数値突合は未了（統計プリセットの性質上、概算のままでも実害は小さい）。高校の就学支援金は highSchoolSupport で費用から控除する",
+      "sourceUrl": "https://www.mext.go.jp/b_menu/toukei/chousa03/gakushuuhi/kekka/k_detail/mext_00001.html"
     }
   },
   "nhiDefaults": {
