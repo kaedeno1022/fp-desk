@@ -7,6 +7,7 @@ import type { NhiCategory } from "@/lib/engine/tables";
 import { createDefaultPerson } from "@/lib/engine/input";
 import { simulate } from "@/lib/engine/simulate";
 import { loadTaxTables } from "@/lib/engine/tables";
+import { MonteCarloPanel } from "./montecarlo-panel";
 import { SimulationResults } from "./results";
 
 type OtherSim = { id: string; name: string; input: SimulationInput };
@@ -1194,6 +1195,11 @@ export function SimulationEditor({
         result={result}
         compare={compare}
         municipalityName={input.municipal.name}
+      />
+
+      <MonteCarloPanel
+        input={input}
+        onChangeVolatility={(v) => patchAccounts({ returnVolatility: v })}
       />
     </div>
   );

@@ -76,6 +76,13 @@ export type SimulationResult = {
   warnings: string[];
 };
 
+/** 年ごとの運用利回りを注入する口（モンテカルロ用）。未指定なら入力の固定利回り */
+export type YearlyRates = (yearIndex: number) => {
+  taxable: number;
+  nisa: number;
+  ideco: number;
+};
+
 /** 被扶養者判定の年収基準（130万円の壁）。所得ベースの簡易判定に使う */
 const DEPENDENT_INCOME_LIMIT = 1_300_000;
 
@@ -85,7 +92,11 @@ type PrevTaxRecord = {
   housingCreditRemainder: number;
 };
 
-export function simulate(input: SimulationInput, t: TaxTables): SimulationResult {
+export function simulate(
+  input: SimulationInput,
+  t: TaxTables,
+  yearlyRates?: YearlyRates
+): SimulationResult {
   const warnings: string[] = [];
   const years: YearResult[] = [];
 
@@ -127,6 +138,8 @@ export function simulate(input: SimulationInput, t: TaxTables): SimulationResult
     input.accounts.nisaInitial,
     input.accounts.nisaInitialContributed
   );
+  // 売却した簿価分は翌年に生涯枠へ復活する（新NISAルール。年間枠は復活しない）
+  let nisaRestoreCarry = 0;
 
   let negativeCashWarned = false;
 
@@ -379,16 +392,30 @@ export function simulate(input: SimulationInput, t: TaxTables): SimulationResult
     const taxableContribution = contributing ? input.accounts.taxableAnnualContribution : 0;
     const nisaContribution = contributing ? input.accounts.nisaAnnualContribution : 0;
 
-    const taxableStep = stepTaxable(taxable, input.accounts.taxableRate, taxableContribution, t);
+    const rates = yearlyRates?.(y) ?? {
+      taxable: input.accounts.taxableRate,
+      nisa: input.accounts.nisaRate,
+      ideco: input.accounts.idecoRate,
+    };
+
+    const taxableStep = stepTaxable(taxable, rates.taxable, taxableContribution, t);
     taxable = taxableStep.balance;
 
-    const nisaStep = stepNisa(nisa, input.accounts.nisaRate, nisaContribution, t);
+    // 前年に売却した簿価分の生涯枠復活を反映してから積み立てる
+    if (nisaRestoreCarry > 0) {
+      nisa = {
+        ...nisa,
+        lifetimeContributed: Math.max(0, nisa.lifetimeContributed - nisaRestoreCarry),
+      };
+      nisaRestoreCarry = 0;
+    }
+    const nisaStep = stepNisa(nisa, rates.nisa, nisaContribution, t);
     nisa = nisaStep.state;
     nisaPrincipal += nisaStep.accepted;
 
     input.adults.forEach((_, i) => {
       if (!idecoPaidOut[i]) {
-        idecoBalances[i] = stepSimple(idecoBalances[i], input.accounts.idecoRate, idecoContribs[i]);
+        idecoBalances[i] = stepSimple(idecoBalances[i], rates.ideco, idecoContribs[i]);
       }
     });
 
@@ -439,9 +466,11 @@ export function simulate(input: SimulationInput, t: TaxTables): SimulationResult
       const prevBalance = nisa.balance;
       const sold = Math.min(prevBalance, amount);
       nisa = { ...nisa, balance: prevBalance - sold };
-      // 元本は平均取得単価方式で残高比例に減額する
+      // 元本は平均取得単価方式で残高比例に減額し、減額分（簿価）は翌年の枠復活に回す
       if (prevBalance > 0) {
+        const prevPrincipal = nisaPrincipal;
         nisaPrincipal = Math.floor((nisaPrincipal * nisa.balance) / prevBalance);
+        nisaRestoreCarry += prevPrincipal - nisaPrincipal;
       }
       cash += sold;
       withdrawnNisa += sold;

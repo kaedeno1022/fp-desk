@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { SimulationResult, YearResult } from "@/lib/engine/simulate";
 import { loadTaxTables } from "@/lib/engine/tables";
+import { fmtAxis, fmtMoney, H, M, niceTicks, PH, PW, W } from "./chart-utils";
 
 // dataviz 検証済み参照パレット（カテゴリカル slot 1〜4 を固定順で使用）。
 // チャート面はアプリのカード色に合わせる
@@ -85,41 +86,6 @@ const ASSET_SERIES: AssetSeriesDef[] = [
   },
 ];
 
-function fmtMoney(v: number): string {
-  const abs = Math.abs(v);
-  if (abs >= 100_000_000) return `${(v / 100_000_000).toFixed(2)}億円`;
-  return `${Math.round(v / 10_000).toLocaleString("ja-JP")}万円`;
-}
-
-/** Y軸目盛り用の短縮表記。左マージンに収まる幅に抑える */
-function fmtAxis(v: number): string {
-  if (v === 0) return "0";
-  const abs = Math.abs(v);
-  if (abs >= 100_000_000) return `${(v / 100_000_000).toLocaleString("ja-JP", { maximumFractionDigits: 1 })}億`;
-  return `${Math.round(v / 10_000).toLocaleString("ja-JP")}万`;
-}
-
-const W = 860;
-const H = 314;
-const M = { top: 16, right: 96, bottom: 42, left: 72 };
-const PW = W - M.left - M.right;
-const PH = H - M.top - M.bottom;
-
-function niceTicks(max: number): number[] {
-  if (max <= 0) return [0];
-  const raw = max / 4;
-  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw;
-  // 最後の目盛りが必ず最大値以上になるまで伸ばす（不足するとデータが上にはみ出す）
-  const ticks: number[] = [];
-  let v = 0;
-  for (;;) {
-    ticks.push(v);
-    if (v >= max) break;
-    v += step;
-  }
-  return ticks;
-}
 
 /** 資産内訳の積み上げ面グラフ。現金マイナスは0にクランプして描画（実額はツールチップ・表を参照） */
 function AssetChart({ years }: { years: YearResult[] }) {

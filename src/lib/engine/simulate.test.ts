@@ -365,6 +365,35 @@ describe("取り崩し開始年の指定", () => {
   });
 });
 
+describe("NISA生涯枠の復活", () => {
+  it("就労中の安全網売却で売った簿価分が翌年の生涯枠に復活し、積立を継続できる", () => {
+    const input = baseInput();
+    // 生涯枠1,800万を使い切った状態で大きな支出→安全網がNISAを売却→翌年に枠が戻る
+    input.adults[0] = { ...input.adults[0], grossAnnual: 10_000_000 };
+    input.livingExpenseAnnual = 0;
+    input.rentAnnual = 0;
+    input.events = [{ year: 2026, label: "大型支出", amount: 20_000_000 }];
+    input.accounts = {
+      ...input.accounts,
+      cashInitial: 0,
+      taxableInitial: 0,
+      nisaInitial: 18_000_000,
+      nisaInitialContributed: 18_000_000,
+      nisaRate: 0,
+      nisaAnnualContribution: 3_600_000,
+    };
+    input.years = 2;
+    const r = simulate(input, t);
+
+    // y0: 枠満杯のため積立は受け入れられず、現金不足でNISAが売却される
+    expect(r.years[0].contributions.nisa).toBe(0);
+    expect(r.years[0].withdrawals.nisa).toBeGreaterThan(3_600_000);
+
+    // y1: 復活した枠により年間上限いっぱいまで積立できる
+    expect(r.years[1].contributions.nisa).toBe(3_600_000);
+  });
+});
+
 describe("NISA元本の追跡", () => {
   it("積立で増え、運用益では増えない", () => {
     const input = baseInput();

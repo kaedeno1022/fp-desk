@@ -98,6 +98,8 @@ export type AccountsInput = {
    * 指定すると就労中でもその年から取り崩し期に入る（積立も止まる）
    */
   drawdownStartYear: number | null;
+  /** モンテカルロ用: 運用リターンの標準偏差（年率、0.12 = 12%） */
+  returnVolatility: number;
 };
 
 export type MunicipalRates = {
@@ -208,6 +210,7 @@ export function createDefaultInput(): SimulationInput {
       idecoRate: 0.03,
       drawdownRate: 0.04,
       drawdownStartYear: null,
+      returnVolatility: 0.12,
     },
     municipal: {
       name: "",
