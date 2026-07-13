@@ -1,0 +1,316 @@
+{
+  "meta": {
+    "fiscalYear": 2025,
+    "description": "令和7年分所得税・令和8年度住民税・令和7年度社会保険料ベースの料率テーブル。verified=false の値は公表値との突合が未実施。確認後に verified を true にして sourceUrl と verifiedDate を記録する",
+    "note": "基礎控除の88/68/63万円の上乗せは令和7・8年分限りの特例だが、『現在の税制を固定』方針によりこのテーブルを全期間に適用する"
+  },
+  "incomeTax": {
+    "brackets": [
+      { "upTo": 1950000, "rate": 0.05, "deduction": 0 },
+      { "upTo": 3300000, "rate": 0.1, "deduction": 97500 },
+      { "upTo": 6950000, "rate": 0.2, "deduction": 427500 },
+      { "upTo": 9000000, "rate": 0.23, "deduction": 636000 },
+      { "upTo": 18000000, "rate": 0.33, "deduction": 1536000 },
+      { "upTo": 40000000, "rate": 0.4, "deduction": 2796000 },
+      { "upTo": null, "rate": 0.45, "deduction": 4796000 }
+    ],
+    "reconstructionSurtaxRate": 0.021,
+    "meta": {
+      "source": "国税庁 タックスアンサー No.2260",
+      "sourceUrl": "https://www.nta.go.jp/taxes/shiraberu/taxanswer/shotoku/2260.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "速算表の公式例（課税所得700万円→974,000円）との一致をテストで確認"
+    }
+  },
+  "salaryDeduction": {
+    "brackets": [
+      { "incomeUpTo": 1900000, "formula": { "rate": 0, "add": 650000 } },
+      { "incomeUpTo": 3600000, "formula": { "rate": 0.3, "add": 80000 } },
+      { "incomeUpTo": 6600000, "formula": { "rate": 0.2, "add": 440000 } },
+      { "incomeUpTo": 8500000, "formula": { "rate": 0.1, "add": 1100000 } },
+      { "incomeUpTo": null, "formula": { "rate": 0, "add": 1950000 } }
+    ],
+    "meta": {
+      "source": "国税庁 令和7年度税制改正（基礎控除の見直し等）",
+      "sourceUrl": "https://www.nta.go.jp/users/gensen/2025kiso/index.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "収入660万円未満は本来別表第五によるが簡易式で近似する。給与収入190万円以下の最低保障65万円は令和7年改正で確認済み"
+    }
+  },
+  "basicDeduction": {
+    "incomeTax": [
+      { "totalIncomeUpTo": 1320000, "amount": 950000 },
+      { "totalIncomeUpTo": 3360000, "amount": 880000 },
+      { "totalIncomeUpTo": 4890000, "amount": 680000 },
+      { "totalIncomeUpTo": 6550000, "amount": 630000 },
+      { "totalIncomeUpTo": 23500000, "amount": 580000 },
+      { "totalIncomeUpTo": 24000000, "amount": 480000 },
+      { "totalIncomeUpTo": 24500000, "amount": 320000 },
+      { "totalIncomeUpTo": 25000000, "amount": 160000 },
+      { "totalIncomeUpTo": null, "amount": 0 }
+    ],
+    "residentTax": [
+      { "totalIncomeUpTo": 24000000, "amount": 430000 },
+      { "totalIncomeUpTo": 24500000, "amount": 290000 },
+      { "totalIncomeUpTo": 25000000, "amount": 150000 },
+      { "totalIncomeUpTo": null, "amount": 0 }
+    ],
+    "meta": {
+      "source": "国税庁 令和7年度税制改正（基礎控除の見直し等）・総務省",
+      "sourceUrl": "https://www.nta.go.jp/users/gensen/2025kiso/index.htm",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "95万円（所得132万円以下）は恒久、88/68/63万円の上乗せは令和7・8年分限定を確認。『現在の税制固定』方針によりこのまま全期間適用する。住民税の基礎控除43万円は据え置きを確認"
+    }
+  },
+  "spouseDeduction": {
+    "spouseIncomeLimit": 580000,
+    "byTaxpayerIncome": [
+      { "taxpayerIncomeUpTo": 9000000, "incomeTax": 380000, "residentTax": 330000 },
+      { "taxpayerIncomeUpTo": 9500000, "incomeTax": 260000, "residentTax": 220000 },
+      { "taxpayerIncomeUpTo": 10000000, "incomeTax": 130000, "residentTax": 110000 },
+      { "taxpayerIncomeUpTo": null, "incomeTax": 0, "residentTax": 0 }
+    ],
+    "specialBrackets": [
+      { "spouseIncomeUpTo": 950000, "incomeTax": 380000, "residentTax": 330000 },
+      { "spouseIncomeUpTo": 1000000, "incomeTax": 360000, "residentTax": 330000 },
+      { "spouseIncomeUpTo": 1050000, "incomeTax": 310000, "residentTax": 310000 },
+      { "spouseIncomeUpTo": 1100000, "incomeTax": 260000, "residentTax": 260000 },
+      { "spouseIncomeUpTo": 1150000, "incomeTax": 210000, "residentTax": 210000 },
+      { "spouseIncomeUpTo": 1200000, "incomeTax": 160000, "residentTax": 160000 },
+      { "spouseIncomeUpTo": 1250000, "incomeTax": 110000, "residentTax": 110000 },
+      { "spouseIncomeUpTo": 1300000, "incomeTax": 60000, "residentTax": 60000 },
+      { "spouseIncomeUpTo": 1330000, "incomeTax": 30000, "residentTax": 30000 },
+      { "spouseIncomeUpTo": null, "incomeTax": 0, "residentTax": 0 }
+    ],
+    "meta": {
+      "source": "国税庁 No.1191・No.1195（令和7年改正後）",
+      "verified": false,
+      "note": "配偶者特別控除は納税者所得900万円以下の列のみ実装。900万円超は配偶者控除と同様の逓減があるが簡略化（該当時は要注意）"
+    }
+  },
+  "dependentDeduction": {
+    "incomeLimit": 580000,
+    "general": { "incomeTax": 380000, "residentTax": 330000, "ageFrom": 16, "ageTo": 18 },
+    "specific": { "incomeTax": 630000, "residentTax": 450000, "ageFrom": 19, "ageTo": 22 },
+    "generalAdult": { "incomeTax": 380000, "residentTax": 330000, "ageFrom": 23, "ageTo": 69 },
+    "elderly": { "incomeTax": 480000, "residentTax": 380000, "ageFrom": 70, "ageTo": null },
+    "meta": {
+      "source": "国税庁 No.1180",
+      "verified": false,
+      "note": "同居老親等の加算・特定親族特別控除（19-22歳所得58万超）は対象外（子の所得は入力しない前提）"
+    }
+  },
+  "insuranceDeduction": {
+    "lifeInsurance": {
+      "incomeTax": {
+        "brackets": [
+          { "premiumUpTo": 20000, "formula": { "rate": 1, "add": 0 } },
+          { "premiumUpTo": 40000, "formula": { "rate": 0.5, "add": 10000 } },
+          { "premiumUpTo": 80000, "formula": { "rate": 0.25, "add": 20000 } },
+          { "premiumUpTo": null, "formula": { "rate": 0, "add": 40000 } }
+        ],
+        "totalCap": 120000
+      },
+      "residentTax": {
+        "brackets": [
+          { "premiumUpTo": 12000, "formula": { "rate": 1, "add": 0 } },
+          { "premiumUpTo": 32000, "formula": { "rate": 0.5, "add": 6000 } },
+          { "premiumUpTo": 56000, "formula": { "rate": 0.25, "add": 14000 } },
+          { "premiumUpTo": null, "formula": { "rate": 0, "add": 28000 } }
+        ],
+        "totalCap": 70000
+      }
+    },
+    "earthquakeInsurance": {
+      "incomeTaxCap": 50000,
+      "residentTaxRate": 0.5,
+      "residentTaxCap": 25000
+    },
+    "meta": { "source": "国税庁 No.1140・No.1145（新制度）", "verified": false, "note": "生保は新制度の区分別枠（一般・介護医療・年金）。旧制度契約は対象外" }
+  },
+  "residentTax": {
+    "incomeRate": 0.1,
+    "perCapita": 5000,
+    "adjustmentCredit": {
+      "differenceBasic": 50000,
+      "differenceSpouse": 50000,
+      "differenceSpouseSpecial": 50000,
+      "differenceDependentGeneral": 50000,
+      "differenceDependentSpecific": 180000,
+      "differenceDependentElderly": 100000,
+      "rateUnder2M": 0.05,
+      "minimum": 2500
+    },
+    "exemption": {
+      "perCapitaBase": 350000,
+      "perCapitaAdd": 100000,
+      "perCapitaFamilyAdd": 210000,
+      "incomeBase": 350000,
+      "incomeAdd": 100000,
+      "incomeFamilyAdd": 320000
+    },
+    "meta": {
+      "source": "総務省・東京都主税局（1級地基準）",
+      "verified": false,
+      "note": "均等割5,000円は森林環境税1,000円込み。非課税限度額は1級地の基準"
+    }
+  },
+  "socialInsurance": {
+    "kenpoRates": {
+      "tokyo": { "health": 0.0991, "care2": 0.0159 },
+      "osaka": { "health": 0.1024, "care2": 0.0159 },
+      "aichi": { "health": 0.1003, "care2": 0.0159 }
+    },
+    "healthGradesThousandYen": [58, 68, 78, 88, 98, 104, 110, 118, 126, 134, 142, 150, 160, 170, 180, 190, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 410, 440, 470, 500, 530, 560, 590, 620, 650, 680, 710, 750, 790, 830, 880, 930, 980, 1030, 1090, 1150, 1210, 1270, 1330, 1390],
+    "pensionGradeMinThousandYen": 88,
+    "pensionGradeMaxThousandYen": 650,
+    "pensionRate": 0.183,
+    "employmentInsuranceRate": 0.0055,
+    "employeeShareRatio": 0.5,
+    "nationalPensionMonthly": 17510,
+    "meta": {
+      "source": "協会けんぽ令和7年度保険料率・厚生労働省・日本年金機構",
+      "sourceUrl": "https://www.kyoukaikenpo.or.jp/about/business/insurance_rate/rate_prefectures/r07/",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "確認済み: 東京9.91%・介護2号1.59%・厚生年金18.3%・雇用保険(一般)労働者0.55%・国民年金月17,510円（いずれも令和7年度）。大阪・愛知の率は未確認なので使用時は要突合。賞与は考慮せず年収/12を報酬月額として等級判定する簡易方式。等級境界は隣接等級の中間値で算出"
+    }
+  },
+  "pensionIncomeDeduction": {
+    "under65": [
+      { "pensionUpTo": 1300000, "formula": { "rate": 0, "add": 600000 } },
+      { "pensionUpTo": 4100000, "formula": { "rate": 0.25, "add": 275000 } },
+      { "pensionUpTo": 7700000, "formula": { "rate": 0.15, "add": 685000 } },
+      { "pensionUpTo": 10000000, "formula": { "rate": 0.05, "add": 1455000 } },
+      { "pensionUpTo": null, "formula": { "rate": 0, "add": 1955000 } }
+    ],
+    "over65": [
+      { "pensionUpTo": 3300000, "formula": { "rate": 0, "add": 1100000 } },
+      { "pensionUpTo": 4100000, "formula": { "rate": 0.25, "add": 275000 } },
+      { "pensionUpTo": 7700000, "formula": { "rate": 0.15, "add": 685000 } },
+      { "pensionUpTo": 10000000, "formula": { "rate": 0.05, "add": 1455000 } },
+      { "pensionUpTo": null, "formula": { "rate": 0, "add": 1955000 } }
+    ],
+    "meta": { "source": "国税庁 No.1600（年金以外の合計所得1,000万円以下の列）", "verified": false }
+  },
+  "retirementDeduction": {
+    "perYearUpTo20": 400000,
+    "perYearOver20": 700000,
+    "minimum": 800000,
+    "meta": { "source": "国税庁 No.1420", "verified": false }
+  },
+  "capitalGainsTaxRate": 0.20315,
+  "nisa": {
+    "annualLimit": 3600000,
+    "lifetimeLimit": 18000000,
+    "meta": { "source": "金融庁 新NISA", "verified": false, "note": "つみたて/成長枠の区別はせず合算で管理する簡易方式" }
+  },
+  "housingLoanCredit": {
+    "creditRate": 0.007,
+    "presets": [
+      { "key": "newCertified", "label": "新築・認定住宅", "loanLimit": 45000000, "years": 13 },
+      { "key": "newZeh", "label": "新築・ZEH水準省エネ", "loanLimit": 35000000, "years": 13 },
+      { "key": "newEnergySaving", "label": "新築・省エネ基準適合", "loanLimit": 30000000, "years": 13 },
+      { "key": "usedCertified", "label": "中古・認定/省エネ", "loanLimit": 30000000, "years": 10 },
+      { "key": "usedOther", "label": "中古・その他", "loanLimit": 20000000, "years": 10 }
+    ],
+    "residentTaxTransferRateOfTaxableIncome": 0.05,
+    "residentTaxTransferCap": 97500,
+    "meta": {
+      "source": "国税庁 No.1211（令和6・7年入居）",
+      "verified": false,
+      "note": "子育て世帯等の限度額上乗せは未対応。入居年により限度額が変わるため入居年変更時は要確認"
+    }
+  },
+  "childAllowance": {
+    "under3Monthly": 15000,
+    "standardMonthly": 10000,
+    "thirdChildMonthly": 30000,
+    "supportAgeMax": 18,
+    "countAgeMax": 22,
+    "meta": {
+      "source": "こども家庭庁 児童手当制度（令和6年10月改正後）",
+      "sourceUrl": "https://www.cfa.go.jp/policies/kokoseido/jidouteate/annai",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "所得制限なし・高校生年代（18歳年度末）まで支給。3歳未満1.5万円/月・3歳〜高校生1万円/月・第3子以降3万円/月。第3子のカウントは22歳年度末までの子を含む。年度末基準は年齢での近似"
+    }
+  },
+  "highSchoolSupport": {
+    "public": 118800,
+    "private": 457000,
+    "meta": {
+      "source": "高等学校等就学支援金（公立: 2025年度から所得制限なし、私立加算: 2026年度から所得制限なし）",
+      "verified": true,
+      "verifiedDate": "2026-07-13",
+      "note": "私立上限は45万7,200円とする資料もある。授業料相当を教育費から控除する簡易実装"
+    }
+  },
+  "educationCosts": {
+    "presets": {
+      "kindergarten": { "public": 170000, "private": 310000, "ageFrom": 3, "ageTo": 5 },
+      "elementary": { "public": 350000, "private": 1670000, "ageFrom": 6, "ageTo": 11 },
+      "juniorHigh": { "public": 540000, "private": 1440000, "ageFrom": 12, "ageTo": 14 },
+      "highSchool": { "public": 510000, "private": 1050000, "ageFrom": 15, "ageTo": 17 },
+      "university": {
+        "national": { "annual": 600000, "firstYearAdd": 280000 },
+        "privateLiberal": { "annual": 1200000, "firstYearAdd": 250000 },
+        "privateScience": { "annual": 1600000, "firstYearAdd": 250000 },
+        "ageFrom": 18,
+        "ageTo": 21
+      }
+    },
+    "meta": {
+      "source": "文部科学省 子供の学習費調査（令和3年度）・私立大学等の学生納付金調査",
+      "verified": false,
+      "note": "学校教育費+給食費+校外活動費込みの年額概算。高校の就学支援金は highSchoolSupport で費用から控除する"
+    }
+  },
+  "nhiDefaults": {
+    "medical": { "incomeRate": 0.077, "perCapita": 47300, "perHousehold": 0, "cap": 660000 },
+    "support": { "incomeRate": 0.027, "perCapita": 16800, "perHousehold": 0, "cap": 260000 },
+    "care": { "incomeRate": 0.023, "perCapita": 16600, "perHousehold": 0, "cap": 170000 },
+    "incomeDeduction": 430000,
+    "meta": {
+      "source": "東京都特別区の令和6年度料率を参考にした既定値",
+      "verified": false,
+      "note": "自治体差が大きいため、居住自治体の公表値でユーザーが上書きする前提の初期値"
+    }
+  },
+  "latterElderlyDefaults": {
+    "perCapita": 47300,
+    "incomeRate": 0.0967,
+    "cap": 800000,
+    "incomeDeduction": 430000,
+    "reduction": {
+      "brackets": [
+        { "thresholdBase": 430000, "thresholdPerInsured": 0, "reductionRate": 0.7 },
+        { "thresholdBase": 430000, "thresholdPerInsured": 305000, "reductionRate": 0.5 },
+        { "thresholdBase": 430000, "thresholdPerInsured": 560000, "reductionRate": 0.2 }
+      ]
+    },
+    "meta": {
+      "source": "東京都後期高齢者医療広域連合の令和6・7年度料率を参考にした既定値",
+      "verified": false,
+      "note": "均等割軽減の判定は世帯所得ベースの簡易実装。給与所得者数による加算は未対応"
+    }
+  },
+  "careInsurance1Defaults": {
+    "baseAnnual": 80000,
+    "stages": [
+      { "incomeUpTo": 1200000, "rate": 0.7 },
+      { "incomeUpTo": 2100000, "rate": 0.9 },
+      { "incomeUpTo": 3200000, "rate": 1.2 },
+      { "incomeUpTo": 4200000, "rate": 1.5 },
+      { "incomeUpTo": null, "rate": 1.7 }
+    ],
+    "meta": {
+      "source": "全国平均基準額（月6,000円台）を参考にした既定値",
+      "verified": false,
+      "note": "実際は9〜13段階×自治体別基準額。居住自治体の公表値でユーザーが上書きする前提の簡易5段階"
+    }
+  }
+}
