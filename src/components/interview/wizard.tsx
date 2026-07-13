@@ -190,6 +190,67 @@ const STEPS: Step[] = [
     visible: (a) => a.housingStatus === "loan",
   },
   {
+    id: "hasDebt1",
+    question: "住宅ローン以外に返済中の借入はありますか？",
+    help: "奨学金・自動車ローン・カードローンなど",
+    type: "choice",
+    choices: [
+      { label: "ある", value: "yes" },
+      { label: "ない", value: "no" },
+    ],
+  },
+  ...[1, 2].flatMap<Step>((k) => [
+    ...(k === 2
+      ? [
+          {
+            id: "hasDebt2",
+            question: "ほかにも借入はありますか？",
+            help: "3件以上ある場合は、作成後の編集画面で追加できます",
+            type: "choice" as const,
+            choices: [
+              { label: "ある", value: "yes" },
+              { label: "ない", value: "no" },
+            ],
+            visible: (a: InterviewAnswers) => a.hasDebt1 === "yes",
+          },
+        ]
+      : []),
+    {
+      id: `debt${k}Type`,
+      question: `${k === 1 ? "" : "2件目の"}借入の種類は？`,
+      type: "choice" as const,
+      choices: [
+        { label: "奨学金", value: "scholarship" },
+        { label: "自動車ローン", value: "car" },
+        { label: "その他", value: "other" },
+      ],
+      visible: (a: InterviewAnswers) => a[`hasDebt${k}`] === "yes",
+    },
+    {
+      id: `debt${k}Balance`,
+      question: `${k === 1 ? "" : "2件目の"}借入の残高は？`,
+      type: "number" as const,
+      unit: "万円",
+      visible: (a: InterviewAnswers) => a[`hasDebt${k}`] === "yes",
+    },
+    {
+      id: `debt${k}YearsLeft`,
+      question: `${k === 1 ? "" : "2件目の"}残り返済年数は？`,
+      type: "number" as const,
+      unit: "年",
+      visible: (a: InterviewAnswers) => a[`hasDebt${k}`] === "yes",
+    },
+    {
+      id: `debt${k}Rate`,
+      question: `${k === 1 ? "" : "2件目の"}金利は？`,
+      help: "奨学金（第一種）など無利子なら0のまま進んでください",
+      type: "number" as const,
+      unit: "%",
+      placeholder: "0",
+      visible: (a: InterviewAnswers) => a[`hasDebt${k}`] === "yes",
+    },
+  ]),
+  {
     id: "livingMonthly",
     question: "毎月の生活費はどのくらいですか？",
     help: "家賃・住宅ローン・教育費は除いた金額です（食費・光熱費・通信費・娯楽など）",

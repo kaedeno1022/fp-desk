@@ -91,15 +91,29 @@ export function buildInputFromInterview(answers: InterviewAnswers): SimulationIn
     input.rentAnnual = 0;
     input.housing = null;
     if (housingStatus === "loan") {
-      input.debts = [
-        {
-          label: "住宅ローン（返済中）",
-          balance: man(answers, "loanBalance"),
-          annualRate: num(answers, "loanRate", 1) / 100,
-          remainingYears: num(answers, "loanYearsLeft", 20),
-        },
-      ];
+      input.debts.push({
+        label: "住宅ローン（返済中）",
+        balance: man(answers, "loanBalance"),
+        annualRate: num(answers, "loanRate", 1) / 100,
+        remainingYears: num(answers, "loanYearsLeft", 20),
+      });
     }
+  }
+
+  // --- 住宅ローン以外の借入（最大2件。3件以上はエディタで追加） ---
+  const debtLabels: Record<string, string> = {
+    scholarship: "奨学金",
+    car: "自動車ローン",
+    other: "その他の借入",
+  };
+  for (const k of [1, 2]) {
+    if (answers[`hasDebt${k}`] !== "yes") continue;
+    input.debts.push({
+      label: debtLabels[String(answers[`debt${k}Type`])] ?? "その他の借入",
+      balance: man(answers, `debt${k}Balance`),
+      annualRate: num(answers, `debt${k}Rate`) / 100,
+      remainingYears: Math.max(1, num(answers, `debt${k}YearsLeft`, 10)),
+    });
   }
 
   // --- 生活費・資産 ---

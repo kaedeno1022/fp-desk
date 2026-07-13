@@ -72,6 +72,51 @@ describe("buildInputFromInterview", () => {
     expect(input.debts[0].remainingYears).toBe(25);
   });
 
+  it("住宅ローン以外の借入（奨学金等）が最大2件計上される", () => {
+    const input = buildInputFromInterview({
+      ...base,
+      hasDebt1: "yes",
+      debt1Type: "scholarship",
+      debt1Balance: 240,
+      debt1YearsLeft: 10,
+      debt1Rate: 0,
+      hasDebt2: "yes",
+      debt2Type: "car",
+      debt2Balance: 150,
+      debt2YearsLeft: 5,
+      debt2Rate: 2.5,
+    });
+    expect(input.debts).toHaveLength(2);
+    expect(input.debts[0].label).toBe("奨学金");
+    expect(input.debts[0].balance).toBe(2_400_000);
+    expect(input.debts[0].annualRate).toBe(0);
+    expect(input.debts[1].label).toBe("自動車ローン");
+    expect(input.debts[1].annualRate).toBeCloseTo(0.025);
+  });
+
+  it("返済中の住宅ローンとその他の借入は併記される", () => {
+    const input = buildInputFromInterview({
+      ...base,
+      housingStatus: "loan",
+      loanBalance: 2500,
+      loanYearsLeft: 25,
+      loanRate: 1.2,
+      hasDebt1: "yes",
+      debt1Type: "scholarship",
+      debt1Balance: 240,
+      debt1YearsLeft: 10,
+      debt1Rate: 0,
+    });
+    expect(input.debts).toHaveLength(2);
+    expect(input.debts[0].label).toBe("住宅ローン（返済中）");
+    expect(input.debts[1].label).toBe("奨学金");
+  });
+
+  it("借入なしと答えれば debts は空のまま", () => {
+    const input = buildInputFromInterview({ ...base, hasDebt1: "no" });
+    expect(input.debts).toHaveLength(0);
+  });
+
   it("独身・購入予定なしなら大人1人・住宅なし", () => {
     const input = buildInputFromInterview({
       ...base,
