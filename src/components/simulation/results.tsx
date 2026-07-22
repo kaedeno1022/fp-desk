@@ -531,6 +531,7 @@ export function SimulationResults({
                 <th className="px-2 py-1.5 font-normal">所得税</th>
                 <th className="px-2 py-1.5 font-normal">住民税</th>
                 <th className="px-2 py-1.5 font-normal">社会保険</th>
+                <th className="px-2 py-1.5 font-normal">手取り</th>
                 <th className="px-2 py-1.5 font-normal">支出</th>
                 <th className="px-2 py-1.5 font-normal">積立</th>
                 <th className="px-2 py-1.5 font-normal">取崩</th>
@@ -548,6 +549,7 @@ export function SimulationResults({
                   <td className="px-2 py-1">{fmtMoney(y.taxes.incomeTax)}</td>
                   <td className="px-2 py-1">{fmtMoney(y.taxes.residentTax)}</td>
                   <td className="px-2 py-1">{fmtMoney(y.social.total)}</td>
+                  <td className="px-2 py-1 font-medium text-ink">{fmtMoney(y.netIncome)}</td>
                   <td className="px-2 py-1">{fmtMoney(y.expenses.total)}</td>
                   <td className="px-2 py-1">
                     {fmtMoney(y.contributions.taxable + y.contributions.nisa + y.contributions.ideco)}

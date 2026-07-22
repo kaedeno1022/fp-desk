@@ -25,6 +25,20 @@ describe("simulate（会社員の生涯）", () => {
     expect(y0.social.nhi).toBe(0);
   });
 
+  it("手取り額: 収入合計から所得税・住民税・社会保険料を引いた額になる", () => {
+    const y0 = result.years[0];
+    expect(y0.netIncome).toBe(
+      y0.income.total - y0.taxes.incomeTax - y0.taxes.residentTax - y0.social.total
+    );
+  });
+
+  it("退職年の手取り額: 退職金は既に手取り額(severanceNet)なので二重控除しない", () => {
+    const y30 = result.years[30];
+    expect(y30.netIncome).toBe(
+      y30.income.total - y30.taxes.incomeTax - y30.taxes.residentTax - y30.social.total
+    );
+  });
+
   it("65歳（退職年）: 給与が消え、退職金と年金受給が始まる", () => {
     const y30 = result.years[30]; // 2056年、65歳
     expect(y30.adultAges[0]).toBe(65);

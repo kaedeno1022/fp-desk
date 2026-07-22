@@ -60,6 +60,8 @@ export type YearResult = {
   withdrawals: { taxable: number; nisa: number };
   /** 収支（資産への積立を除く手残り。現金口座に入る額） */
   cashflow: number;
+  /** 年間手取り額（収入合計から所得税・住民税・社会保険料を引いた額。支出は含まない） */
+  netIncome: number;
   assets: {
     cash: number;
     taxable: number;
@@ -555,6 +557,15 @@ export function simulate(
       },
       withdrawals: { taxable: withdrawnTaxable, nisa: withdrawnNisa },
       cashflow,
+      netIncome:
+        grossIncomeTotal +
+        severanceNet +
+        idecoNet +
+        childAllowance +
+        eventIncome -
+        incomeTaxTotal -
+        residentTaxTotal -
+        socialTotal,
       assets: {
         cash,
         taxable,
