@@ -1,63 +1,65 @@
 // シミュレーションの保存・呼び出し。
-// 単一ユーザー運用だが、将来の顧客紐付け（Phase 2）に備えて必ず user_id で絞り込む
-import { randomUUID } from "node:crypto";
-import { db } from "@/lib/db";
+// GitHub Pages(静的配信)向けにDBを廃止し、ブラウザのlocalStorageへ保存する
 import type { SimulationInput } from "@/lib/engine/input";
 
-export type SimulationRow = {
+const STORAGE_KEY = "fp-desk:simulations";
+
+export type SimulationRecord = {
   id: string;
-  user_id: string;
   name: string;
-  input_json: string;
-  created_at: string;
-  updated_at: string;
+  input: SimulationInput;
+  createdAt: string;
+  updatedAt: string;
 };
 
-export type SimulationSummary = Pick<SimulationRow, "id" | "name" | "updated_at">;
+export type SimulationSummary = Pick<SimulationRecord, "id" | "name" | "updatedAt">;
 
-export function listSimulations(userId: string): SimulationSummary[] {
-  return db
-    .prepare(
-      "SELECT id, name, updated_at FROM simulations WHERE user_id = ? ORDER BY updated_at DESC"
-    )
-    .all(userId) as SimulationSummary[];
+function readAll(): SimulationRecord[] {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as SimulationRecord[];
+  } catch {
+    return [];
+  }
 }
 
-export function getSimulation(id: string, userId: string): SimulationRow | undefined {
-  return db
-    .prepare("SELECT * FROM simulations WHERE id = ? AND user_id = ?")
-    .get(id, userId) as SimulationRow | undefined;
+function writeAll(records: SimulationRecord[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
 }
 
-export function createSimulation(
-  userId: string,
-  name: string,
-  input: SimulationInput
-): string {
-  const id = randomUUID();
-  db.prepare(
-    "INSERT INTO simulations (id, user_id, name, input_json) VALUES (?, ?, ?, ?)"
-  ).run(id, userId, name, JSON.stringify(input));
+export function listSimulations(): SimulationSummary[] {
+  return readAll()
+    .map(({ id, name, updatedAt }) => ({ id, name, updatedAt }))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
+export function getSimulation(id: string): SimulationRecord | undefined {
+  return readAll().find((r) => r.id === id);
+}
+
+export function createSimulation(name: string, input: SimulationInput): string {
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const records = readAll();
+  records.push({ id, name, input, createdAt: now, updatedAt: now });
+  writeAll(records);
   return id;
 }
 
-export function updateSimulation(
-  id: string,
-  userId: string,
-  name: string,
-  input: SimulationInput
-): boolean {
-  const result = db
-    .prepare(
-      "UPDATE simulations SET name = ?, input_json = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
-    )
-    .run(name, JSON.stringify(input), id, userId);
-  return result.changes > 0;
+export function updateSimulation(id: string, name: string, input: SimulationInput): boolean {
+  const records = readAll();
+  const idx = records.findIndex((r) => r.id === id);
+  if (idx === -1) return false;
+  records[idx] = { ...records[idx], name, input, updatedAt: new Date().toISOString() };
+  writeAll(records);
+  return true;
 }
 
-export function deleteSimulation(id: string, userId: string): boolean {
-  const result = db
-    .prepare("DELETE FROM simulations WHERE id = ? AND user_id = ?")
-    .run(id, userId);
-  return result.changes > 0;
+export function deleteSimulation(id: string): boolean {
+  const records = readAll();
+  const next = records.filter((r) => r.id !== id);
+  if (next.length === records.length) return false;
+  writeAll(next);
+  return true;
 }

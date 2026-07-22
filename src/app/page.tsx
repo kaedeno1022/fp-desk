@@ -1,16 +1,35 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { getSession } from "@/lib/session";
-import { getUserById } from "@/lib/users";
-import { listSimulations } from "@/lib/simulations";
-import { LogoutButton } from "@/components/auth/logout-button";
-import { createSimulationAction, deleteSimulationAction } from "@/app/simulations/actions";
+"use client";
 
-export default async function Home() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-  const user = getUserById(session.userId);
-  const simulations = listSimulations(session.userId);
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createDefaultInput } from "@/lib/engine/input";
+import {
+  createSimulation,
+  deleteSimulation,
+  listSimulations,
+  type SimulationSummary,
+} from "@/lib/simulations";
+
+export default function Home() {
+  const router = useRouter();
+  const [simulations, setSimulations] = useState<SimulationSummary[]>([]);
+
+  useEffect(() => {
+    // localStorageはSSR時点で存在しないため、effect内での読み込みが必須
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSimulations(listSimulations());
+  }, []);
+
+  function handleCreate() {
+    const id = createSimulation("新しいシミュレーション", createDefaultInput());
+    router.push(`/simulations/edit?id=${id}`);
+  }
+
+  function handleDelete(id: string) {
+    deleteSimulation(id);
+    setSimulations(listSimulations());
+  }
 
   return (
     <div className="flex flex-col flex-1">
@@ -18,10 +37,6 @@ export default async function Home() {
         <div className="flex items-baseline gap-3">
           <h1 className="font-mono text-lg font-bold tracking-tight text-ink">fp-desk</h1>
           <span className="text-xs text-ink2">ライフプラン設計</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-ink2">{user?.email}</span>
-          <LogoutButton />
         </div>
       </header>
 
@@ -37,14 +52,13 @@ export default async function Home() {
             >
               ヒアリングから作成
             </Link>
-            <form action={createSimulationAction}>
-              <button
-                type="submit"
-                className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
-              >
-                新規作成
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="rounded-md bg-accent px-5 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
+            >
+              新規作成
+            </button>
           </div>
         </div>
 
@@ -60,18 +74,19 @@ export default async function Home() {
                 className={`flex items-center gap-4 px-5 py-3.5 ${i > 0 ? "border-t border-line" : ""}`}
               >
                 <Link
-                  href={`/simulations/${s.id}`}
+                  href={`/simulations/edit?id=${s.id}`}
                   className="flex-1 text-sm font-medium text-ink hover:text-accent hover:underline"
                 >
                   {s.name}
                 </Link>
-                <span className="num text-xs text-ink2">更新 {s.updated_at.slice(0, 10)}</span>
-                <form action={deleteSimulationAction}>
-                  <input type="hidden" name="id" value={s.id} />
-                  <button type="submit" className="text-xs text-critical hover:underline">
-                    削除
-                  </button>
-                </form>
+                <span className="num text-xs text-ink2">更新 {s.updatedAt.slice(0, 10)}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(s.id)}
+                  className="text-xs text-critical hover:underline"
+                >
+                  削除
+                </button>
               </li>
             ))}
           </ul>

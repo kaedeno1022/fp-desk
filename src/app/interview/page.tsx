@@ -1,12 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
 import { InterviewWizard } from "@/components/interview/wizard";
 
-export default async function InterviewPage() {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
+export default function InterviewPage() {
   return (
     <div className="flex flex-col flex-1">
       <header className="flex items-baseline gap-4 border-b border-line bg-card px-6 py-3">
