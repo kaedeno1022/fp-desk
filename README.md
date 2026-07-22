@@ -7,18 +7,15 @@ FP（ファイナンシャルプランナー）業務支援システム。自分
 
 ## 技術スタック
 
-Next.js + SQLite（better-sqlite3）。外部サービス依存なし・ローカル完結。認証は bcryptjs + jose（JWTセッションCookie）の自前実装。
+Next.js（`output: "export"` による静的サイト生成）。サーバー・DB・認証なし。GitHub Pages上で完結する。
+
+保存データ（シミュレーション入力）はブラウザの localStorage に保持する。サーバー側には何も送信しない。
 
 ## セットアップ
 
 ```bash
 npm install
-
-# セッション署名用シークレットを生成して .env.local に設定する
-echo "SESSION_SECRET=$(openssl rand -base64 32)" > .env.local
 ```
-
-`.env.local` の設定項目は `.env.example` を参照。`DATABASE_PATH` は省略時 `data/fp-desk.db`（初回起動時に自動作成される）。
 
 ## 起動
 
@@ -28,36 +25,38 @@ npm run dev
 
 http://localhost:3000 を開く。
 
-- 初回は「アカウント作成」からユーザー登録する（メール確認はない。メールアドレスはID代わり）
-- **シングルユーザーモード**: ユーザーが1人でも存在すると以降の新規登録は拒否される
-- パスワードを忘れた場合はDBを直接操作するしかない（`data/fp-desk.db` の users テーブル）
+- トップページから「新しいシミュレーション」を作成、またはヒアリングウィザードで一問一答から生成する
+- 作成したシミュレーションはブラウザの localStorage に保存される（ブラウザ・端末をまたいだ同期はない。ストレージを消すとデータも消える）
 
 ## コマンド
 
 | コマンド | 内容 |
 |---|---|
 | `npm run dev` | 開発サーバ起動 |
-| `npm run build` | 本番ビルド |
-| `npm run start` | 本番サーバ起動（要ビルド） |
+| `npm run build` | 静的サイトビルド（`out/` に出力） |
+| `npm run start` | ビルド済みファイルの確認用サーバ起動 |
 | `npm test` | テスト実行（vitest） |
 | `npm run test:watch` | テストのwatch実行 |
 | `npm run type-check` | TypeScript型チェック |
 | `npm run lint` | ESLint |
+
+## デプロイ
+
+`main` ブランチへの push で `.github/workflows/deploy.yml` が実行され、GitHub Pages に自動デプロイされる（`npm run build` → `out/` を公開）。`next.config.ts` の `basePath: "/fp-desk"` はリポジトリ名に合わせたパスなので、フォーク・別名運用時は変更が必要。
 
 ## 構成
 
 ```
 data/
   tax-tables/2025.json   税率・料率テーブル（年度データ）
-  fp-desk.db             SQLite本体（gitignore対象）
 docs/
   REQUIREMENTS.md        要件定義
   DOMAIN.md              計算ドメイン仕様（式・境界・端数処理・検証基準）
 src/
-  lib/engine/            計算エンジン（UI・DBから独立した純関数群 + テスト）
-  lib/                   DB接続・認証・セッション・保存CRUD
-  app/                   画面（一覧 / シミュレーション編集 / ログイン）
-  components/            エディタ・結果表示（グラフ・CF表）
+  lib/engine/            計算エンジン（UI・保存から独立した純関数群 + テスト。所得税・住民税・社会保険・国保・ローン・教育費・児童手当・資産運用・モンテカルロ等）
+  lib/simulations.ts     シミュレーションの保存・呼び出し（localStorage）
+  app/                   画面（一覧 / ヒアリングウィザード / シミュレーション編集）
+  components/            ヒアリングウィザード・エディタ・結果表示（グラフ・CF表・モンテカルロ）
 ```
 
 ## 税率テーブルの検証状態（重要）
@@ -78,4 +77,4 @@ src/
 
 ## データのバックアップ
 
-DBは `data/fp-desk.db` の単一ファイル。バックアップはこのファイルのコピーで足りる（WALモードのため、確実を期すならサーバ停止後にコピーする）。
+保存データはブラウザの localStorage のみに存在する（サーバー側にコピーはない）。ブラウザのストレージ消去・端末変更でデータは失われるため、重要なシミュレーションはエクスポート機能（未実装の場合はDevToolsでlocalStorageの値を手動退避）でバックアップすること。
