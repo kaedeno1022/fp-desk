@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createFromInterviewAction } from "@/app/simulations/actions";
+import { createSimulation } from "@/lib/simulations";
 import {
   buildInputFromInterview,
   interviewSimulationName,
@@ -124,6 +125,7 @@ const STEPS: Step[] = [
       { label: "賃貸", value: "rent" },
       { label: "持ち家（ローン返済中）", value: "loan" },
       { label: "持ち家（完済済み）", value: "owned" },
+      { label: "実家など（家賃負担なし）", value: "free" },
     ],
   },
   {
@@ -317,6 +319,7 @@ const inputCls =
   "w-full rounded-md border border-line bg-card px-3 py-2.5 text-lg text-ink num";
 
 export function InterviewWizard() {
+  const router = useRouter();
   const [answers, setAnswers] = useState<InterviewAnswers>({});
   const [stepIdx, setStepIdx] = useState(0);
   const [draft, setDraft] = useState("");
@@ -362,11 +365,10 @@ export function InterviewWizard() {
             </div>
           ))}
         </dl>
-        <form action={createFromInterviewAction} className="flex items-center gap-3">
-          <input type="hidden" name="inputJson" value={JSON.stringify(input)} />
-          <input type="hidden" name="name" value={name} />
+        <div className="flex items-center gap-3">
           <button
-            type="submit"
+            type="button"
+            onClick={() => router.push(`/simulations/edit?id=${createSimulation(name, input)}`)}
             className="rounded-md bg-accent px-6 py-2 text-sm font-medium text-accent-ink transition-opacity hover:opacity-90"
           >
             「{name}」を作成する
@@ -374,7 +376,7 @@ export function InterviewWizard() {
           <button type="button" onClick={back} className="text-sm text-ink2 hover:underline">
             ← 戻って修正
           </button>
-        </form>
+        </div>
       </div>
     );
   }

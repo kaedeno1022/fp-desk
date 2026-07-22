@@ -117,6 +117,13 @@ describe("buildInputFromInterview", () => {
     expect(input.debts).toHaveLength(0);
   });
 
+  it("実家などで家賃負担なしと答えれば家賃0・住宅なし・借入なし", () => {
+    const input = buildInputFromInterview({ ...base, housingStatus: "free" });
+    expect(input.rentAnnual).toBe(0);
+    expect(input.housing).toBeNull();
+    expect(input.debts).toHaveLength(0);
+  });
+
   it("独身・購入予定なしなら大人1人・住宅なし", () => {
     const input = buildInputFromInterview({
       ...base,

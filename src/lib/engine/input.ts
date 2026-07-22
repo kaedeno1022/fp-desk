@@ -114,8 +114,13 @@ export type MunicipalRates = {
 
 export type SimulationInput = {
   startYear: number;
+  /**
+   * シミュレーション開始月（1〜12）。初年度（startYear）は年途中に登録するケースが多いため、
+   * 残り月数（13-startMonth）/12 の割合で初年度の収入・生活費・積立額を按分する。
+   * 「現在の残高」に年初からの実績が既に反映されている前提と整合させるための簡易補正
+   */
+  startMonth: number;
   years: number;
-  prefecture: string;
   adults: PersonInput[];
   children: ChildInput[];
   /** 教育費・住宅費以外の基礎生活費（年額、初年度価格） */
@@ -183,11 +188,12 @@ export function createDefaultPerson(name: string, birthYear: number): PersonInpu
 
 export function createDefaultInput(): SimulationInput {
   const t = loadTaxTables();
-  const currentYear = new Date().getFullYear();
+  const now = new Date();
+  const currentYear = now.getFullYear();
   return {
     startYear: currentYear,
+    startMonth: now.getMonth() + 1,
     years: 60,
-    prefecture: "tokyo",
     adults: [createDefaultPerson("本人", currentYear - 35)],
     children: [],
     livingExpenseAnnual: 2_400_000,

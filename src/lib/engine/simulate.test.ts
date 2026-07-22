@@ -8,6 +8,7 @@ const t = loadTaxTables();
 function baseInput(): SimulationInput {
   const input = createDefaultInput();
   input.startYear = 2026;
+  input.startMonth = 1; // 年途中按分を無効化し、通年での挙動を検証する
   input.adults[0].birthYear = 1991; // 2026年に35歳
   return input;
 }
@@ -146,7 +147,7 @@ describe("教育費・警告", () => {
 });
 
 describe("定率取り崩し", () => {
-  it("退職して労働収入がなくなった年から積立が止まり、残高×取り崩し率が現金化される", () => {
+  it("退職後も年金だけで生活費を賄えていれば取り崩しは起きない", () => {
     const input = baseInput();
     input.adults[0] = {
       ...input.adults[0],
@@ -154,8 +155,9 @@ describe("定率取り崩し", () => {
       retirementAge: 65,
       severancePay: 0,
       pensionStartAge: 65,
-      pensionAnnual: 5_000_000, // 生活費を賄える年金にして安全網売却を発生させない
+      pensionAnnual: 5_000_000, // 生活費を上回る年金
     };
+    input.accounts.cashInitial = 1_423_811; // 退職直前にちょうど現金が尽きる額
     input.accounts.taxableAnnualContribution = 600_000;
     input.accounts.nisaAnnualContribution = 400_000;
     input.accounts.taxableInitial = 10_000_000;
@@ -170,26 +172,55 @@ describe("定率取り崩し", () => {
     expect(r.years[1].contributions.nisa).toBe(400_000);
     expect(r.years[1].withdrawals.taxable).toBe(0);
 
-    // 退職年: 積立0、(課税1,120万+NISA80万)×4% = 48万を課税口座から取り崩す
+    // 退職年: 積立は止まるが、年金だけで黒字（cf=+431,340）なので売却は発生しない
     expect(r.years[2].income.salary).toBe(0);
     expect(r.years[2].contributions.taxable).toBe(0);
     expect(r.years[2].contributions.nisa).toBe(0);
-    expect(r.years[2].withdrawals.taxable).toBe(480_000);
+    expect(r.years[2].cashflow).toBeGreaterThan(0);
+    expect(r.years[2].withdrawals.taxable).toBe(0);
     expect(r.years[2].withdrawals.nisa).toBe(0);
+  });
+
+  it("不足額が取り崩し上限より小さければ、不足額ぴったりだけ売却する（上限まで無条件には売らない）", () => {
+    const input = baseInput();
+    input.adults[0] = {
+      ...input.adults[0],
+      birthYear: 2026 - 63, // 2028年に65歳で退職
+      retirementAge: 65,
+      severancePay: 0,
+      pensionStartAge: 65,
+      pensionAnnual: 4_000_000, // 生活費に対してやや不足する年金
+    };
+    input.accounts.cashInitial = 1_423_811; // 退職直前にちょうど現金が尽きる額
+    input.accounts.taxableAnnualContribution = 600_000;
+    input.accounts.nisaAnnualContribution = 400_000;
+    input.accounts.taxableInitial = 10_000_000;
+    input.accounts.taxableRate = 0;
+    input.accounts.nisaRate = 0;
+    input.accounts.drawdownRate = 0.04;
+    input.years = 4;
+    const r = simulate(input, t);
+
+    // 退職年: 上限は(課税1,120万+NISA80万)×4%=48万だが、不足額は38.826万しかないのでその分だけ売る
+    expect(r.years[2].cashflow).toBe(-388_260);
+    expect(r.years[2].withdrawals.taxable).toBe(388_260);
+    expect(r.years[2].withdrawals.taxable).toBeLessThan(480_000);
+    expect(r.years[2].withdrawals.nisa).toBe(0);
+    expect(r.years[2].assets.cash).toBe(0);
   });
 
   it("課税口座の残高が足りない分はNISAから取り崩される", () => {
     const input = baseInput();
-    // 労働収入なし → 初年度から取り崩し期。現金・生活費は安全網が働かない条件にする
+    // 労働収入なし → 初年度から取り崩し期。生活費と社保負担で400,000円の不足を作る
     input.adults[0] = {
       ...input.adults[0],
       employment: "none",
       grossAnnual: 0,
       severancePay: 0,
     };
-    input.livingExpenseAnnual = 0;
+    input.livingExpenseAnnual = 125_780; // + 国民年金・国保の最低負担分で不足額が400,000円になる
     input.rentAnnual = 0;
-    input.accounts.cashInitial = 5_000_000;
+    input.accounts.cashInitial = 0;
     input.accounts.taxableInitial = 100_000;
     input.accounts.taxableRate = 0;
     input.accounts.nisaInitial = 9_900_000;
@@ -199,7 +230,7 @@ describe("定率取り崩し", () => {
     input.years = 1;
     const r = simulate(input, t);
 
-    // (10万+990万)×4% = 40万 → 課税10万 + NISA30万
+    // 不足額40万 = (10万+990万)×4%の上限ちょうど。課税10万を売り切ってからNISA30万
     expect(r.years[0].withdrawals.taxable).toBe(100_000);
     expect(r.years[0].withdrawals.nisa).toBe(300_000);
   });
@@ -324,7 +355,7 @@ describe("生活費の変更", () => {
 });
 
 describe("取り崩し開始年の指定", () => {
-  it("指定すると就労中でもその年から取り崩し期に入る", () => {
+  it("指定すると就労中でもその年から積立が止まる（現金が足りていれば売却は起きない）", () => {
     const input = baseInput();
     input.accounts.taxableInitial = 10_000_000;
     input.accounts.taxableRate = 0;
@@ -335,33 +366,35 @@ describe("取り崩し開始年の指定", () => {
 
     expect(r.years[1].contributions.taxable).toBe(600_000);
     expect(r.years[1].withdrawals.taxable).toBe(0);
-    // 2028年: 就労中（給与あり）でも積立停止+定率取り崩し
+    // 2028年: 就労中（給与あり）だが積立は止まる。積立していた分だけ収支が改善するので売却は起きない
     expect(r.years[2].income.salary).toBeGreaterThan(0);
     expect(r.years[2].contributions.taxable).toBe(0);
-    expect(r.years[2].withdrawals.taxable).toBeGreaterThan(0);
+    expect(r.years[2].withdrawals.taxable).toBe(0);
   });
 
-  it("指定すると退職後も指定年までは定率取り崩しをしない", () => {
+  it("開始年を先送りしても、それより前に現金が尽きれば安全網の取り崩しが始まる", () => {
     const input = baseInput();
     input.adults[0] = {
       ...input.adults[0],
       birthYear: 2026 - 64, // 2027年に65歳で退職
       retirementAge: 65,
       severancePay: 0,
-      pensionAnnual: 5_000_000, // 生活費を賄える年金で安全網売却を防ぐ
+      pensionAnnual: 1_000_000, // 生活費を賄えない年金
     };
+    input.accounts.cashInitial = 3_000_000;
     input.accounts.taxableInitial = 10_000_000;
     input.accounts.taxableRate = 0;
-    input.accounts.drawdownStartYear = 2030;
+    input.accounts.drawdownStartYear = 2030; // 指定した開始年より前に現金が尽きる想定
     input.years = 6;
     const r = simulate(input, t);
 
-    // 退職後（2027〜2029年）も定率取り崩しは始まらない
-    expect(r.years[2].income.salary).toBe(0);
-    expect(r.years[2].withdrawals.taxable).toBe(0);
-    expect(r.years[3].withdrawals.taxable).toBe(0);
-    // 2030年から定率取り崩し
-    expect(r.years[4].withdrawals.taxable).toBe(400_000);
+    // 退職直後（2027年）はまだ現金が残っているので売却なし
+    expect(r.years[1].income.salary).toBe(0);
+    expect(r.years[1].withdrawals.taxable).toBe(0);
+    expect(r.years[1].assets.cash).toBeGreaterThan(0);
+    // 2028年には現金が尽き、指定年（2030年）より前でも安全網が売却する
+    expect(r.years[2].withdrawals.taxable).toBeGreaterThan(0);
+    expect(r.years[2].assets.cash).toBe(0);
   });
 });
 
@@ -417,11 +450,11 @@ describe("NISA元本の追跡", () => {
       grossAnnual: 0,
       severancePay: 0,
     };
-    input.livingExpenseAnnual = 0;
+    input.livingExpenseAnnual = 725_780; // + 国民年金・国保の最低負担分で不足額が取り崩し上限ちょうどになる
     input.rentAnnual = 0;
     input.accounts = {
       ...input.accounts,
-      cashInitial: 5_000_000,
+      cashInitial: 0,
       taxableInitial: 0,
       nisaInitial: 10_000_000,
       nisaInitialContributed: 6_000_000,
@@ -470,5 +503,47 @@ describe("共働き世帯", () => {
     expect(rs.years[0].taxes.incomeTax).toBeLessThan(ra.years[0].taxes.incomeTax);
     expect(rs.years[0].social.nationalPension).toBe(0);
     expect(rs.years[0].social.nhi).toBe(0);
+  });
+});
+
+describe("年途中開始の按分（初年度の二重計上を避ける）", () => {
+  it("開始月から年末までの残り月数で初年度の収入・生活費・積立を按分する", () => {
+    const input = createDefaultInput();
+    input.startYear = 2026;
+    input.startMonth = 7; // 7月開始 → 初年度は残り6か月分
+    input.adults[0].birthYear = 1991;
+    input.adults[0].grossAnnual = 6_000_000;
+    input.adults[0].incomeGrowthRate = 0;
+    input.livingExpenseAnnual = 2_400_000;
+    input.rentAnnual = 1_200_000;
+    input.inflationRate = 0;
+    input.accounts.taxableAnnualContribution = 1_200_000;
+    input.years = 2;
+    const r = simulate(input, t);
+
+    // 初年度（2026年）: 全て年額の6/12
+    expect(r.years[0].income.salary).toBe(3_000_000);
+    expect(r.years[0].expenses.living).toBe(1_200_000);
+    expect(r.years[0].expenses.rent).toBe(600_000);
+    expect(r.years[0].contributions.taxable).toBe(600_000);
+
+    // 2年目（2027年）: 通常通り満額
+    expect(r.years[1].income.salary).toBe(6_000_000);
+    expect(r.years[1].expenses.living).toBe(2_400_000);
+    expect(r.years[1].expenses.rent).toBe(1_200_000);
+    expect(r.years[1].contributions.taxable).toBe(1_200_000);
+  });
+
+  it("1月開始なら按分は効かない（通年）", () => {
+    const input = createDefaultInput();
+    input.startYear = 2026;
+    input.startMonth = 1;
+    input.adults[0].birthYear = 1991;
+    input.adults[0].grossAnnual = 6_000_000;
+    input.adults[0].incomeGrowthRate = 0;
+    input.years = 1;
+    const r = simulate(input, t);
+
+    expect(r.years[0].income.salary).toBe(6_000_000);
   });
 });

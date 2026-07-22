@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { saveSimulationAction, type SaveState } from "@/app/simulations/actions";
+import { updateSimulation } from "@/lib/simulations";
 import type { ChildInput, MunicipalRates, PersonInput, SimulationInput } from "@/lib/engine/input";
 import type { NhiCategory } from "@/lib/engine/tables";
 import { createDefaultPerson } from "@/lib/engine/input";
@@ -160,7 +160,27 @@ function Section({
   );
 }
 
+type SaveState = { message: string | null; error: string | null };
+
 const initialSaveState: SaveState = { message: null, error: null };
+
+async function saveSimulationAction(_prev: SaveState, formData: FormData): Promise<SaveState> {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { message: null, error: "名前を入力してほしい" };
+
+  let input: SimulationInput;
+  try {
+    input = JSON.parse(String(formData.get("inputJson") ?? "")) as SimulationInput;
+  } catch {
+    return { message: null, error: "入力データの形式が不正" };
+  }
+
+  if (!updateSimulation(id, name, input)) {
+    return { message: null, error: "保存対象が見つからない" };
+  }
+  return { message: "保存した", error: null };
+}
 
 export function SimulationEditor({
   id,
@@ -279,9 +299,14 @@ export function SimulationEditor({
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Section title="前提条件" description="シミュレーションの期間・物価・保険料率の地域">
+        <Section title="前提条件" description="シミュレーションの期間・物価上昇率">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Num label="開始年" value={input.startYear} onChange={(v) => patch({ startYear: v })} />
+            <Num
+              label="開始月"
+              value={input.startMonth}
+              onChange={(v) => patch({ startMonth: Math.min(12, Math.max(1, v)) })}
+            />
             <Num
               label="期間（年）"
               value={input.years}
@@ -314,20 +339,10 @@ export function SimulationEditor({
                 ))}
               </div>
             </div>
-            <Field label="都道府県">
-              <select
-                className={inputCls}
-                value={input.prefecture}
-                onChange={(e) => patch({ prefecture: e.target.value })}
-              >
-                <option value="tokyo">東京</option>
-                <option value="osaka">大阪</option>
-                <option value="aichi">愛知</option>
-              </select>
-            </Field>
           </div>
           <p className="mt-2 text-xs text-ink2">
-            都道府県は健康保険料率（協会けんぽ）の算定に使う。
+            初年度（開始年）は開始月から年末までの残り月数で年収・生活費・積立額を按分する。
+            「現在の残高」に開始月までの実績が反映済みという前提のため、二重計上を避けるための補正
           </p>
         </Section>
 
@@ -1110,9 +1125,15 @@ export function SimulationEditor({
             </a>
           )}
         </div>
-        <p className="mb-4 text-xs text-ink2">
+        <p className="mb-1 text-xs text-ink2">
           「（自治体名） 国民健康保険料 料率」「（自治体名） 介護保険料 基準額」で検索すると公表ページが見つかる。
         </p>
+        <ul className="mb-4 list-disc pl-4 text-xs text-ink2">
+          <li><span className="font-bold">所得割</span> = 所得に応じてかかる％。公表ページの「所得割率」をそのまま入れる</li>
+          <li><span className="font-bold">均等割</span> = 加入者1人あたりにかかる定額（例: 加入者3人なら×3人分）</li>
+          <li><span className="font-bold">平等割</span> = 世帯単位でかかる定額。設定していない自治体は0でよい</li>
+          <li><span className="font-bold">賦課限度額</span> = その区分の年間保険料の上限</li>
+        </ul>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {(
@@ -1125,22 +1146,22 @@ export function SimulationEditor({
             <div key={cat} className="flex flex-col gap-3">
               <div className="text-xs font-bold text-ink">{label}</div>
               <Pct
-                label="所得割"
+                label="所得割（％）"
                 value={input.municipal.nhi[cat].incomeRate}
                 onChange={(v) => patchNhi(cat, { incomeRate: v })}
               />
               <Yen
-                label="均等割/人"
+                label="均等割（円/人）"
                 value={input.municipal.nhi[cat].perCapita}
                 onChange={(v) => patchNhi(cat, { perCapita: v })}
               />
               <Yen
-                label="平等割/世帯"
+                label="平等割（円/世帯）"
                 value={input.municipal.nhi[cat].perHousehold}
                 onChange={(v) => patchNhi(cat, { perHousehold: v })}
               />
               <Money
-                label="賦課限度額"
+                label="賦課限度額（上限/年）"
                 value={input.municipal.nhi[cat].cap}
                 onChange={(v) => patchNhi(cat, { cap: v })}
               />
@@ -1150,14 +1171,14 @@ export function SimulationEditor({
 
         <div className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4 lg:grid-cols-4">
           <Yen
-            label="介護1号 基準額/年（65歳〜）"
+            label="介護1号 基準額（円/年・65歳〜）"
             value={input.municipal.care1.baseAnnual}
             onChange={(v) =>
               patchMunicipal({ care1: { ...input.municipal.care1, baseAnnual: v } })
             }
           />
           <Yen
-            label="後期高齢者 均等割/年（75歳〜）"
+            label="後期高齢者 均等割（円/年・75歳〜）"
             value={input.municipal.latterElderly.perCapita}
             onChange={(v) =>
               patchMunicipal({
@@ -1166,7 +1187,7 @@ export function SimulationEditor({
             }
           />
           <Pct
-            label="後期高齢者 所得割"
+            label="後期高齢者 所得割（％）"
             value={input.municipal.latterElderly.incomeRate}
             onChange={(v) =>
               patchMunicipal({
@@ -1175,7 +1196,7 @@ export function SimulationEditor({
             }
           />
           <Money
-            label="後期高齢者 賦課限度額"
+            label="後期高齢者 賦課限度額（上限/年）"
             value={input.municipal.latterElderly.cap}
             onChange={(v) =>
               patchMunicipal({
@@ -1185,7 +1206,8 @@ export function SimulationEditor({
           />
         </div>
         <p className="mt-2 text-xs text-ink2">
-          介護1号の所得段階別乗率・後期高齢者の均等割軽減の判定基準は既定値のまま使う（自治体差の主因である基準額・料率のみ上書きする簡易方式）。
+          介護1号は「基準額×所得段階ごとの乗率」、後期高齢者は「所得割＋均等割（軽減判定あり）」で計算する。
+          所得段階別の乗率・軽減判定基準は既定値のまま使う（自治体差の主因である基準額・料率のみ上書きする簡易方式）。
         </p>
       </Section>
 

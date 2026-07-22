@@ -82,7 +82,7 @@ export type TaxTables = {
     };
   };
   socialInsurance: {
-    kenpoRates: Record<string, { health: number; care2: number }>;
+    kenpoRate: { health: number; care2: number };
     healthGradesThousandYen: number[];
     pensionGradeMinThousandYen: number;
     pensionGradeMaxThousandYen: number;

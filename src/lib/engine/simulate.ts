@@ -148,6 +148,11 @@ export function simulate(
     const adultAges = input.adults.map((a) => year - a.birthYear);
     const childAges = input.children.map((c) => year - c.birthYear);
 
+    // 初年度は年途中開始を想定し、残り月数分だけに按分する（「現在の残高」に
+    // 年初からの実績が反映済みという前提と、収入・支出の二重計上を避けるため）
+    const yearFraction = y === 0 ? (13 - input.startMonth) / 12 : 1;
+    const prorate = (v: number) => Math.floor(v * yearFraction);
+
     // --- 収入（個人別） ---
     const isEmployee = input.adults.map(
       (a, i) => a.employment === "employee" && adultAges[i] < a.retirementAge
@@ -167,12 +172,14 @@ export function simulate(
       if (change) return change.annual;
       return Math.floor(a.grossAnnual * Math.pow(1 + a.incomeGrowthRate, y));
     };
-    const grossSalary = input.adults.map((_, i) => (isEmployee[i] ? laborIncomeFor(i) : 0));
+    const grossSalary = input.adults.map((_, i) =>
+      isEmployee[i] ? prorate(laborIncomeFor(i)) : 0
+    );
     const businessIncome = input.adults.map((_, i) =>
-      isSelfEmployed[i] ? laborIncomeFor(i) : 0
+      isSelfEmployed[i] ? prorate(laborIncomeFor(i)) : 0
     );
     const pensionRevenue = input.adults.map((a, i) =>
-      adultAges[i] >= a.pensionStartAge ? a.pensionAnnual : 0
+      adultAges[i] >= a.pensionStartAge ? prorate(a.pensionAnnual) : 0
     );
 
     const totalIncomes = input.adults.map((a, i) => {
@@ -187,7 +194,7 @@ export function simulate(
     // --- 社会保険（個人別 + 世帯単位の国保） ---
     const employeeSi = input.adults.map((a, i) =>
       isEmployee[i]
-        ? employeeSocialInsurance(grossSalary[i], adultAges[i], input.prefecture, t).total
+        ? employeeSocialInsurance(grossSalary[i], adultAges[i], t).total
         : 0
     );
 
@@ -239,7 +246,7 @@ export function simulate(
 
     // --- iDeCo拠出（59歳まで） ---
     const idecoContribs = input.adults.map((a, i) =>
-      adultAges[i] < 60 && !idecoPaidOut[i] ? a.idecoAnnualContribution : 0
+      adultAges[i] < 60 && !idecoPaidOut[i] ? prorate(a.idecoAnnualContribution) : 0
     );
     idecoContribs.forEach((c, i) => {
       if (c > 0) idecoContribYears[i]++;
@@ -365,18 +372,20 @@ export function simulate(
         (acc, c) => (acc === null || c.fromYear > acc.fromYear ? c : acc),
         null as { fromYear: number; annual: number } | null
       );
-    const living = Math.floor((livingBase?.annual ?? input.livingExpenseAnnual) * inflator);
+    const living = prorate((livingBase?.annual ?? input.livingExpenseAnnual) * inflator);
     const debtPayments = debtSchedules.reduce(
       (sum, rows) => sum + (y < rows.length ? rows[y].payment : 0),
       0
     );
-    const education = input.children.reduce(
-      (sum, c, ci) => sum + educationCostForAge(childAges[ci], c.educationPlan, t),
-      0
+    const education = prorate(
+      input.children.reduce(
+        (sum, c, ci) => sum + educationCostForAge(childAges[ci], c.educationPlan, t),
+        0
+      )
     );
-    const childAllowance = childAllowanceAnnual(childAges, t);
+    const childAllowance = prorate(childAllowanceAnnual(childAges, t));
     const paysRent = !input.housing || year < input.housing.purchaseYear;
-    const rent = paysRent ? Math.floor(input.rentAnnual * inflator) : 0;
+    const rent = paysRent ? prorate(input.rentAnnual * inflator) : 0;
     const yearEvents = input.events.filter((e) => e.year === year);
     const eventExpense = yearEvents.reduce((s, e) => s + Math.max(0, e.amount), 0);
     const eventIncome = yearEvents.reduce((s, e) => s + Math.max(0, -e.amount), 0);
@@ -389,8 +398,8 @@ export function simulate(
     const startOverride = input.accounts.drawdownStartYear ?? null;
     const drawdownActive = startOverride !== null ? year >= startOverride : !hasLaborIncome;
     const contributing = hasLaborIncome && !drawdownActive;
-    const taxableContribution = contributing ? input.accounts.taxableAnnualContribution : 0;
-    const nisaContribution = contributing ? input.accounts.nisaAnnualContribution : 0;
+    const taxableContribution = contributing ? prorate(input.accounts.taxableAnnualContribution) : 0;
+    const nisaContribution = contributing ? prorate(input.accounts.nisaAnnualContribution) : 0;
 
     const rates = yearlyRates?.(y) ?? {
       taxable: input.accounts.taxableRate,
@@ -477,11 +486,13 @@ export function simulate(
       return sold;
     };
 
-    // 1) 定率取り崩し: 取り崩し期は残高合計×取り崩し率を
-    //    課税口座→NISAの順に現金化（非課税のNISAを温存するFPの定石順）
+    // 1) 定率取り崩し: 取り崩し期はその年の現金不足額を、残高合計×取り崩し率を上限に
+    //    課税口座→NISAの順に現金化する（非課税のNISAを温存するFPの定石順）。
+    //    年金等で不足がない年は売らない（上限を無条件に売ると使わない現金だけが積み上がるため）
     if (drawdownActive) {
       const rate = input.accounts.drawdownRate ?? 0;
-      let planned = Math.floor((taxable + nisa.balance) * rate);
+      const ceiling = Math.floor((taxable + nisa.balance) * rate);
+      let planned = Math.min(ceiling, Math.max(0, -cash));
       planned -= sellTaxable(planned);
       sellNisa(planned);
     }

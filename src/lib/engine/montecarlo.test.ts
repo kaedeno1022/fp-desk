@@ -9,6 +9,7 @@ const t = loadTaxTables();
 function baseInput(): SimulationInput {
   const input = createDefaultInput();
   input.startYear = 2026;
+  input.startMonth = 1; // 年途中按分を無効化し、通年での挙動を検証する
   input.adults[0].birthYear = 1991;
   input.years = 30;
   input.accounts.nisaAnnualContribution = 1_200_000;

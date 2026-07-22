@@ -32,7 +32,6 @@ export function standardMonthly(monthly: number, gradesThousandYen: number[]): n
 export function employeeSocialInsurance(
   annualSalary: number,
   age: number,
-  prefecture: string,
   t: TaxTables
 ): EmployeeSocialInsurance {
   const s = t.socialInsurance;
@@ -47,7 +46,7 @@ export function employeeSocialInsurance(
   };
   if (annualSalary <= 0) return zero;
 
-  const rates = s.kenpoRates[prefecture] ?? s.kenpoRates["tokyo"];
+  const rates = s.kenpoRate;
   const monthly = annualSalary / 12;
   const share = s.employeeShareRatio;
 
